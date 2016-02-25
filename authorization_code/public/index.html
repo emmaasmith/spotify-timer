@@ -6,7 +6,7 @@
     https://github.com/possan/playlistcreator-example
     https://developer.spotify.com/web-api/tutorial/
      -->
-    <title>Example of the Authorization Code flow with Spotify</title>
+    <title>Timer Tunes</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <style type="text/css">
       #login, #loggedin {
@@ -19,125 +19,297 @@
         width: 500px;
       }
     </style>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
   </head>
 
   <body>
 
     <div class="container">
       <h1>Timer Tunes</h1>
-      <p>Enter the timer value to count down (and optionally an energy level).</p>
-      <form id="timer-val">
-          <select id="minute">
-          </select>
-          <select id="second">
-          </select>
-          <br>
-          <select id="mood">
-          </select>
-          <br>
-          <input type="submit" id="search" class="submit-timer" value="Search" />
-      </form>
-
-      <div id="output"></div>
+      <div class="row">
+        <p>Enter the timer value to count down.</p> 
+        <p>The slider represents music energy level.</p>
+        <form id="timer-val">
+            <select id="minute">
+            </select>
+            <select id="second">
+            </select>
+            <br>
+            <input type="range" min="0.0" max="1.0" id="energy" step="0.01" value="0.5" style="width:20%">
+            <br>
+            <input type="submit" id="search" class="submit-timer" value="Search" />
+        </form>
+      </div>
+      <div class="row">
+        <div class="col-md-8">
+          <div id="widget"></div>
+        </div>
+        <div class="col-md-4">
+          <div id="countdown">
+            <span class="min"></span>
+            <div class="clockLabel">Minutes</div>
+            <span class="sec"></span>
+            <div class="clockLabel">Seconds</div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div id="output"></div>
+      </div>
+        
     </div>
 
+    
 
-    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+
+    
 
 
    <script>
-
-
     $(document).ready(function() {
-      for(var i=0; i<60; i++){
-        $('#minute').append('<option value="'+i+'">'+i+'</option>');
-        $('#second').append('<option value="'+i+'">'+i+'</option>');
+      // Global var
+      var widgetTxt = '<iframe src="https://embed.spotify.com/?uri=spotify:trackset:PREFEREDTITLE:'; 
+
+      // Set up drop-downs
+      function dropDowns() {
+        $('#second').append('<option value="0">'+0+'</option>');
+        for(var i=1; i<60; i++){
+          $('#minute').append('<option value="'+i+'">'+i+'</option>');
+          $('#second').append('<option value="'+i+'">'+i+'</option>');
+        }
+      }
+      dropDowns();
+
+
+      // Set up clock
+      function countdown(done) {
+        var left = (Date.parse(done) - Date.parse(new Date())) / 1000;
+        var sec = Math.floor(left % 60);
+        var min = Math.floor((left / 60) % 60);
+
+        return {
+          'tot': left,
+          'min': min,
+          'sec': sec
+        };
       }
 
-      var moods;
-      var fillMood = function() {
-        var url = 'http://developer.echonest.com/api/v4/artist/list_terms?api_key=TCBNV01L0WKIP1NDF&format=json&type=mood';
+      function runCountdown(end) {
+        function updateClock() {
+          var left = countdown(end);
+          $('.min').innerHTML = ('0' + left.minutes).slice(-2);
+          $('.sec').innerHTML = ('0' + left.seconds).slice(-2);
+
+          if (left.total <= 0) {
+            clearInterval(intv);
+          }
+        }
+
+        updateClock();
+        var intv = setInterval(updateClock, 1000);
+      }
+
+      var selectTracks = function(rs, len, totTime, selHot, selEnergy) {
+        var times = [];
+        var totLen = 0;
+        for (var r=0; r<len; r++){
+          times[r] = Math.round(rs[r].audio_summary.duration);
+          totLen += times[r];
+        }
+
+        // Do we have enough songs?
+        if (totLen < totTime){
+          alert('help');
+          // for (var r=0; r<len; r++){
+          //   times[r] = Math.round(rs[r].audio_summary.duration);
+          //   totLen += times[r];
+          // }
+        }
+
+        // Assuming we have enough, let's get close
+        var M = [],
+            m2 = [],
+            R = [],
+            r2 = [],
+            o1, o2,
+            tracks = [];
+
+        for(var i=0; i<totTime; i++){
+          m2[i] = 0;
+          r2[i] = "0";
+        }
+        M.push(m2);
+        R.push(r2);
+
+        for(var i=1; i<len; i++){
+          m2 = [];
+          r2 = [];
+          for(var j=0; j<totTime; j++){
+            if(j < times[i]){
+              m2[j] = M[i-1][j];
+              r2[j] = R[i-1][j] + "0";
+            } else {
+              o1 = M[i-1][j];
+              o2 = times[i] + M[i-1][j-times[i]];
+              if (o1 >= o2){
+                m2[j] = o1;
+                r2[j] = R[i-1][j] + "0";
+              } else {
+                m2[j] = o2;
+                r2[j] = R[i-1][j-times[i]] + "1";
+              }
+            }
+          }
+          M.push(m2);
+          R.push(r2);
+        }
+        for(var j=0; j<totTime; j++){
+          if (R[len-1][totTime-1].charAt(j) == "1"){
+            tracks.push(rs[j]);
+          }
+        }
+        showTracks(tracks);
+      }
+
+
+      var printTrack = function(r, r_dur) {
+        // If spotify is found
+        var r_img = r.album.images[r.album.images.length - 1].url,
+          r_album_URI = r.album.uri,
+          r_album_name = r.album.name || "Unknown",
+          r_artist_name = r.artists[0].name || "Unknown",
+          r_artist_URI = r.artists[0].uri || "Unknown",
+          r_song_URI = r.uri,
+          r_id = r.id,
+          r_song_name = r.name || "Unknown";
+        var txt = '<div class="media">' +
+          '<a class="pull-left" href="#"><img class="media-object" src="' + r_img + '" /></a>' +
+          '<div class="media-body">' +
+          '<h4 class="media-heading"><a href="' + r_song_URI + '">' + r_song_name + ' (' + r_dur + ' sec)' + '</a></h4>' +
+          'Album: <a href="' + r_album_URI + '">' + r_album_name +
+          '</a><br/>Artist: <a href="' + r_artist_URI + '">' + r_artist_name +'</a>' +
+          '</div>' +
+          '</div>\n';      
+
+        $('#output').append(txt);
+        widgetTxt += r_id + ',';
+      }
+
+
+      // var printTrackNoMatch = function(en_r) {
+      //   var r_img = 'http://dreamatico.com/data_images/music/music-7.jpg',
+      //     r_artist_name = en_r.artist_name || "Unknown",
+      //     r_song_name = en_r.title || "Unknown",
+      //     r_dur = Math.round(en_r.audio_summary.duration);
+      //   var txt = '<div class="media">' +
+      //     '<a class="pull-left" href="#"><img class="media-object" src="' + r_img + '" /></a>' +
+      //     '<div class="media-body">' +
+      //     '<h4 class="media-heading">' + r_song_name + '(' + r_dur + 'sec)' + '</h4>' +
+      //     '<br/>Artist: ' + r_artist_name + '</div>' + '</div>\n';
+        
+      //   $('#output').append(txt);
+      // }
+
+
+      var showTracks = function(rs) {
+        var j=0, k=0;
+        for(var i in rs){
+          var en_r = rs[i];
+          var url = 'https://api.spotify.com/v1/search?type=track&limit=1&q='+en_r.title +' '+ en_r.artist_name;
+
+          $.ajax(url, {
+            dataType: 'json',
+            success: function(res) {
+              printTrack(res.tracks.items[0], Math.round(rs[j++].audio_summary.duration));
+              if(j>=rs.length){
+                widgetTxt = widgetTxt.substring(0, widgetTxt.length - 1) +'&view=coverart" width="300" height="380" onclick=function(){alert("hi");} frameborder="0" allowtransparency="true"></iframe>';
+                $('#widget').append(widgetTxt);
+              }
+            },
+            error: function(res) {
+              // printTrackNoMatch(en_r);
+            }
+          });
+        }
+        $('#output').append("<br><br>");
+      }
+
+
+      var doSearch = function(totTime, selHot, selEnergy) {
+
+        var minEnergy = Number(selEnergy) - 0.1,
+            maxEnergy = Number(selEnergy) + 0.1;
+        minEnergy = (minEnergy > 0) ? minEnergy : 0;
+        maxEnergy = (maxEnergy < 1) ? maxEnergy : 1;
+
+        var buckets = '&bucket=audio_summary&bucket=artist_discovery_rank&bucket=artist_familiarity_rank';
+
+        var url = 'http://developer.echonest.com/api/v4/song/search?api_key=TCBNV01L0WKIP1NDF&format=json&results=100&rank_type=familiarity&sort=song_hotttnesss-desc&song_min_hotttnesss='+selHot+'&min_duration=60&max_duration='+totTime+'&min_energy='+minEnergy+'&max_energy='+maxEnergy+buckets;
+
         $.ajax(url, {
           format: 'json',
           api_key: 'TCBNV01L0WKIP1NDF',
           success: function(r) {
-            // 
-            moods = r.response.terms;
-            for (var mood in moods){
-              $('#mood').append('<option value="'+moods[mood]["name"]+'">'+moods[mood]["name"]+'</option>');
-            }
+            var len = r.response.songs.length;
+            selectTracks(r.response.songs, len, totTime, selHot, selEnergy);
           },
           error: function(r) {
-            alert("error");
+            // alert("error");
           }
         });
       }
-      fillMood();
 
-    });
+      var moreSongs = function(totTime, selHot, selEnergy) {
+        var moreResults = [],
+            moreLen = 0;
 
-      
+        var minEnergy = Number(selEnergy) - 0.3,
+            maxEnergy = Number(selEnergy) - 0.1;
+        minEnergy = (minEnergy > 0) ? minEnergy : 0;
+        maxEnergy = (maxEnergy < 1) ? maxEnergy : 1;
 
-      var postTrack = function(r) {
-        var r_img = r.album.images[r.album.images.length - 1].url,
-            r_album_URI = r.album.uri,
-            r_album_name = r.album.name || "Unknown",
-            r_artist_name = r.artists[0].name || "Unknown",
-            r_artist_URI = r.artists[0].uri || "Unknown",
-            r_song_URI = r.uri,
-            r_song_name = r.name,
-            r_dur_ms = r.duration_ms,
-            r_pop = r.popularity,
-            r_URL = r.external_urls.spotify,
-            r_artist = r.artists[0].name || "Unknown";
-        var txt = '<div class="media">' +
-          '<a class="pull-left" href="#"><img class="media-object" src="' + r_img + '" /></a>' +
-          '<div class="media-body">' +
-          '<h4 class="media-heading"><a href="' + r_song_URI + '">' + r_song_name + '</a></h4>' +
-          'Album: <a href="' + r_album_URI + '">' + r_album_name +
-          '</a><br/>Artist: <a href="' + r_artist_URI + '">' + r_artist_name +'</a>' +
-          '</div>' +
-          '</div>\n';
+        var buckets = '&bucket=audio_summary&bucket=artist_discovery_rank&bucket=artist_familiarity_rank';
 
-          $('#output').html(txt);
-      }
-
-
-
-        var doSearch = function(word, numRes, selMood) {
-
-          
-          var buckets = '&bucket=audio_summary&bucket=artist_discovery_rank&bucket=artist_familiarity_rank';
-          var url = 'http://developer.echonest.com/api/v4/song/search?api_key=TCBNV01L0WKIP1NDF&format=json&results='+Number(numRes)+'&rank_type=familiarity&sort=song_hotttnesss-desc&song_min_hotttnesss=0.5&mood='+selMood+buckets;
+        for (var i=0; i<2; i++){
+          var url = 'http://developer.echonest.com/api/v4/song/search?api_key=TCBNV01L0WKIP1NDF&format=json&results=100&rank_type=familiarity&sort=duration-asc&song_min_hotttnesss='+selHot+'&max_duration='+totTime+'&min_energy='+minEnergy+'&max_energy='+maxEnergy+buckets;
 
           $.ajax(url, {
             format: 'json',
             api_key: 'TCBNV01L0WKIP1NDF',
             success: function(r) {
-              console.log(r);
-              // console.log("success", r.tracks.items[0]);
-              // postTrack(r.tracks.items[0]);
+              moreLen += r.response.songs.length;
+              moreResults.push(r.response.songs);
             },
             error: function(r) {
-              alert("error");
             }
           });
+
+          minEnergy = Number(selEnergy) + 0.1;
+          maxEnergy = Number(selEnergy) + 0.3;
         }
 
+        return [moreResults, moreLen, totTime, selHot, selEnergy];
+      }
 
 
-        $('#timer-val').submit(function (e) {
-            e.preventDefault();
-            var inMin = Number($('#minute').val()),
-                inSec = Number($('#second').val()),
-                inMood = $('#mood').val();
-            var inputSecs = inSec + (inMin * 60);
-            doSearch(inputSecs, 100, inMood);
+
+      $('#timer-val').submit(function (e) {
+          e.preventDefault();
+          $('#output').empty();
+          $('#widget').empty();
+          widgetTxt = '<iframe src="https://embed.spotify.com/?uri=spotify:trackset:PREFEREDTITLE:';
+
+          var inMin = Number($('#minute').val()),
+              inSec = Number($('#second').val()),
+              inEnergy = $('#energy').val();
+          var inputSecs = inSec + (inMin * 60);
+          doSearch(inputSecs, 0.2, inEnergy);
       });
 
 
-
+    });
     </script>
   
   </body>
