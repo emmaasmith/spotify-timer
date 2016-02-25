@@ -32,12 +32,14 @@
         <p>Enter the timer value to count down.</p> 
         <p>The slider represents music energy level.</p>
         <form id="timer-val">
+            <select id="hour">
+            </select>
             <select id="minute">
             </select>
             <select id="second">
             </select>
             <br>
-            <input type="range" min="0.0" max="1.0" id="energy" step="0.01" value="0.5" style="width:20%">
+            <input type="range" min="0.15" max="0.85" id="energy" step="0.01" value="0.5" style="width:20%">
             <br>
             <input type="submit" id="search" class="submit-timer" value="Search" />
         </form>
@@ -58,19 +60,17 @@
       <div class="row">
         <div id="output"></div>
       </div>
-        
     </div>
 
     
 
-
-    
-
-
    <script>
     $(document).ready(function() {
+
       // Global var
       var widgetTxt = '<iframe src="https://embed.spotify.com/?uri=spotify:trackset:PREFEREDTITLE:'; 
+      var wl=0, wcnt=0;
+      var access_token = '';
 
       // Set up drop-downs
       function dropDowns() {
@@ -79,39 +79,13 @@
           $('#minute').append('<option value="'+i+'">'+i+'</option>');
           $('#second').append('<option value="'+i+'">'+i+'</option>');
         }
+        for(var i=0; i<8; i++){
+          $('#hour').append('<option value="'+i+'">'+i+'</option>');
+        }
       }
       dropDowns();
 
-
-      // Set up clock
-      function countdown(done) {
-        var left = (Date.parse(done) - Date.parse(new Date())) / 1000;
-        var sec = Math.floor(left % 60);
-        var min = Math.floor((left / 60) % 60);
-
-        return {
-          'tot': left,
-          'min': min,
-          'sec': sec
-        };
-      }
-
-      function runCountdown(end) {
-        function updateClock() {
-          var left = countdown(end);
-          $('.min').innerHTML = ('0' + left.minutes).slice(-2);
-          $('.sec').innerHTML = ('0' + left.seconds).slice(-2);
-
-          if (left.total <= 0) {
-            clearInterval(intv);
-          }
-        }
-
-        updateClock();
-        var intv = setInterval(updateClock, 1000);
-      }
-
-      var selectTracks = function(rs, len, totTime, selHot, selEnergy) {
+      var selectTracks = function(rs, len, totTime, selHot, selEnergy, firsttime, callback) {
         var times = [];
         var totLen = 0;
         for (var r=0; r<len; r++){
@@ -121,11 +95,12 @@
 
         // Do we have enough songs?
         if (totLen < totTime){
-          alert('help');
-          // for (var r=0; r<len; r++){
-          //   times[r] = Math.round(rs[r].audio_summary.duration);
-          //   totLen += times[r];
-          // }
+          if(!firsttime){
+            moreSongs(totTime, selHot, selEnergy, rs, len, callback);
+            return;
+          } else {
+             $('#output').append("Apologies -- we did not grab enough music. Try a different request.");
+          }
         }
 
         // Assuming we have enough, let's get close
@@ -135,6 +110,8 @@
             r2 = [],
             o1, o2,
             tracks = [];
+
+        totTime++;
 
         for(var i=0; i<totTime; i++){
           m2[i] = 0;
@@ -170,19 +147,17 @@
             tracks.push(rs[j]);
           }
         }
-        showTracks(tracks);
+        callback(tracks);
       }
 
-
       var printTrack = function(r, r_dur) {
-        // If spotify is found
-        var r_img = r.album.images[r.album.images.length - 1].url,
-          r_album_URI = r.album.uri,
+        var r_img = r.album.images[r.album.images.length - 1].url || "http://dreamatico.com/data_images/music/music-7.jpg",
+          r_album_URI = r.album.uri || 0,
           r_album_name = r.album.name || "Unknown",
           r_artist_name = r.artists[0].name || "Unknown",
           r_artist_URI = r.artists[0].uri || "Unknown",
-          r_song_URI = r.uri,
-          r_id = r.id,
+          r_song_URI = r.uri || 0,
+          r_id = r.id || 0,
           r_song_name = r.name || "Unknown";
         var txt = '<div class="media">' +
           '<a class="pull-left" href="#"><img class="media-object" src="' + r_img + '" /></a>' +
@@ -198,23 +173,8 @@
       }
 
 
-      // var printTrackNoMatch = function(en_r) {
-      //   var r_img = 'http://dreamatico.com/data_images/music/music-7.jpg',
-      //     r_artist_name = en_r.artist_name || "Unknown",
-      //     r_song_name = en_r.title || "Unknown",
-      //     r_dur = Math.round(en_r.audio_summary.duration);
-      //   var txt = '<div class="media">' +
-      //     '<a class="pull-left" href="#"><img class="media-object" src="' + r_img + '" /></a>' +
-      //     '<div class="media-body">' +
-      //     '<h4 class="media-heading">' + r_song_name + '(' + r_dur + 'sec)' + '</h4>' +
-      //     '<br/>Artist: ' + r_artist_name + '</div>' + '</div>\n';
-        
-      //   $('#output').append(txt);
-      // }
-
-
-      var showTracks = function(rs) {
-        var j=0, k=0;
+      var showTracks = function(rs, callback) {
+        var k=0;
         for(var i in rs){
           var en_r = rs[i];
           var url = 'https://api.spotify.com/v1/search?type=track&limit=1&q='+en_r.title +' '+ en_r.artist_name;
@@ -222,14 +182,12 @@
           $.ajax(url, {
             dataType: 'json',
             success: function(res) {
-              printTrack(res.tracks.items[0], Math.round(rs[j++].audio_summary.duration));
-              if(j>=rs.length){
-                widgetTxt = widgetTxt.substring(0, widgetTxt.length - 1) +'&view=coverart" width="300" height="380" onclick=function(){alert("hi");} frameborder="0" allowtransparency="true"></iframe>';
-                $('#widget').append(widgetTxt);
-              }
+              console.log(rs[wcnt], wcnt, rs);
+              callback(res.tracks.items[0], Math.round(rs[wcnt++].audio_summary.duration));
             },
             error: function(res) {
-              // printTrackNoMatch(en_r);
+              $('#output').append("Sorry! An error has occurred. Please try again with a different request.");
+              callback(null, null);
             }
           });
         }
@@ -237,8 +195,7 @@
       }
 
 
-      var doSearch = function(totTime, selHot, selEnergy) {
-
+      var findSongs = function(totTime, selHot, selEnergy, callback) {
         var minEnergy = Number(selEnergy) - 0.1,
             maxEnergy = Number(selEnergy) + 0.1;
         minEnergy = (minEnergy > 0) ? minEnergy : 0;
@@ -253,15 +210,16 @@
           api_key: 'TCBNV01L0WKIP1NDF',
           success: function(r) {
             var len = r.response.songs.length;
-            selectTracks(r.response.songs, len, totTime, selHot, selEnergy);
+            callback(r.response.songs, len, totTime, selHot, selEnergy, 0);
           },
           error: function(r) {
-            // alert("error");
+            $('#output').append("Sorry! An error has occurred. Please try again with a different request.");
+            callback(null, null, null, null, null, null);
           }
         });
       }
 
-      var moreSongs = function(totTime, selHot, selEnergy) {
+      var moreSongs = function(totTime, selHot, selEnergy, rs, len, callback) {
         var moreResults = [],
             moreLen = 0;
 
@@ -279,37 +237,58 @@
             format: 'json',
             api_key: 'TCBNV01L0WKIP1NDF',
             success: function(r) {
-              moreLen += r.response.songs.length;
-              moreResults.push(r.response.songs);
+              moreLen = r.response.songs.length;
+              if(moreLen != 0){
+                moreResults = r.response.songs;
+                for(r in rs){
+                  moreResults.push(rs[r]);
+                }
+                selectTracks(moreResults, len+moreLen, totTime, selHot, selEnergy, 1, callback);
+                return;
+              } else{
+                minEnergy = Number(selEnergy) + 0.1;
+                maxEnergy = Number(selEnergy) + 0.3;
+              }
             },
             error: function(r) {
+              console.log("Echonest error");
             }
           });
-
-          minEnergy = Number(selEnergy) + 0.1;
-          maxEnergy = Number(selEnergy) + 0.3;
-        }
-
-        return [moreResults, moreLen, totTime, selHot, selEnergy];
+        }        
       }
-
-
 
       $('#timer-val').submit(function (e) {
           e.preventDefault();
           $('#output').empty();
-          $('#widget').empty();
-          widgetTxt = '<iframe src="https://embed.spotify.com/?uri=spotify:trackset:PREFEREDTITLE:';
+          $('#widget').append();
+          widgetTxt = '<iframe src="https://embed.spotify.com/?uri=spotify:trackset:TIMER%20TUNES:';
+          wl=0;
+          wcnt=0;
 
-          var inMin = Number($('#minute').val()),
+          var inHr = Number($('#hour').val()),
+              inMin = Number($('#minute').val()),
               inSec = Number($('#second').val()),
               inEnergy = $('#energy').val();
-          var inputSecs = inSec + (inMin * 60);
-          doSearch(inputSecs, 0.2, inEnergy);
+          var inputSecs = inSec + (inMin * 60) + (inHr * 3600);
+          if(inputSecs==60){
+            inputSecs = 61;
+          }
+          findSongs(inputSecs, 0.2, inEnergy, function(rs, len, totTime, selHot, selEnergy, firsttime){
+              selectTracks(rs, len, totTime, selHot, selEnergy, firsttime, function(tracks){
+                showTracks(tracks, function(r, r_dur){
+                  printTrack(r, r_dur);
+                  if(wcnt>=tracks.length && wl==0){
+                    wl=1;
+                    widgetTxt = widgetTxt.substring(0, widgetTxt.length - 1) +'&view=coverart" width="300" height="380"} frameborder="0" allowtransparency="true"></iframe>';
+                    $('#widget').empty();
+                    $('#widget').append(widgetTxt);
+                  }
+                });
+              });
+          });
       });
-
-
     });
+
     </script>
   
   </body>
