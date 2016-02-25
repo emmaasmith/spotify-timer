@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+  <head>
+    <!-- 
+    With inspiration and help from:
+    https://github.com/possan/playlistcreator-example
+    https://developer.spotify.com/web-api/tutorial/
+     -->
+    <title>Example of the Authorization Code flow with Spotify</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <style type="text/css">
+      #login, #loggedin {
+        display: none;
+      }
+      .text-overflow {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 500px;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div class="container">
+      <h1>Timer Tunes</h1>
+      <p>Enter the timer value to count down (and optionally an energy level).</p>
+      <form id="timer-val">
+          <select id="minute">
+          </select>
+          <select id="second">
+          </select>
+          <br>
+          <select id="mood">
+          </select>
+          <br>
+          <input type="submit" id="search" class="submit-timer" value="Search" />
+      </form>
+
+      <div id="output"></div>
+    </div>
+
+
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+
+
+   <script>
+
+
+    $(document).ready(function() {
+      for(var i=0; i<60; i++){
+        $('#minute').append('<option value="'+i+'">'+i+'</option>');
+        $('#second').append('<option value="'+i+'">'+i+'</option>');
+      }
+
+      var moods;
+      var fillMood = function() {
+        var url = 'http://developer.echonest.com/api/v4/artist/list_terms?api_key=TCBNV01L0WKIP1NDF&format=json&type=mood';
+        $.ajax(url, {
+          format: 'json',
+          api_key: 'TCBNV01L0WKIP1NDF',
+          success: function(r) {
+            // 
+            moods = r.response.terms;
+            for (var mood in moods){
+              $('#mood').append('<option value="'+moods[mood]["name"]+'">'+moods[mood]["name"]+'</option>');
+            }
+          },
+          error: function(r) {
+            alert("error");
+          }
+        });
+      }
+      fillMood();
+
+    });
+
+      
+
+      var postTrack = function(r) {
+        var r_img = r.album.images[r.album.images.length - 1].url,
+            r_album_URI = r.album.uri,
+            r_album_name = r.album.name || "Unknown",
+            r_artist_name = r.artists[0].name || "Unknown",
+            r_artist_URI = r.artists[0].uri || "Unknown",
+            r_song_URI = r.uri,
+            r_song_name = r.name,
+            r_dur_ms = r.duration_ms,
+            r_pop = r.popularity,
+            r_URL = r.external_urls.spotify,
+            r_artist = r.artists[0].name || "Unknown";
+        var txt = '<div class="media">' +
+          '<a class="pull-left" href="#"><img class="media-object" src="' + r_img + '" /></a>' +
+          '<div class="media-body">' +
+          '<h4 class="media-heading"><a href="' + r_song_URI + '">' + r_song_name + '</a></h4>' +
+          'Album: <a href="' + r_album_URI + '">' + r_album_name +
+          '</a><br/>Artist: <a href="' + r_artist_URI + '">' + r_artist_name +'</a>' +
+          '</div>' +
+          '</div>\n';
+
+          $('#output').html(txt);
+      }
+
+
+
+        var doSearch = function(word, numRes, selMood) {
+
+          
+          var buckets = '&bucket=audio_summary&bucket=artist_discovery_rank&bucket=artist_familiarity_rank';
+          var url = 'http://developer.echonest.com/api/v4/song/search?api_key=TCBNV01L0WKIP1NDF&format=json&results='+Number(numRes)+'&rank_type=familiarity&sort=song_hotttnesss-desc&song_min_hotttnesss=0.5&mood='+selMood+buckets;
+
+          $.ajax(url, {
+            format: 'json',
+            api_key: 'TCBNV01L0WKIP1NDF',
+            success: function(r) {
+              console.log(r);
+              // console.log("success", r.tracks.items[0]);
+              // postTrack(r.tracks.items[0]);
+            },
+            error: function(r) {
+              alert("error");
+            }
+          });
+        }
+
+
+
+        $('#timer-val').submit(function (e) {
+            e.preventDefault();
+            var inMin = Number($('#minute').val()),
+                inSec = Number($('#second').val()),
+                inMood = $('#mood').val();
+            var inputSecs = inSec + (inMin * 60);
+            doSearch(inputSecs, 100, inMood);
+      });
+
+
+
+    </script>
+  
+  </body>
+</html>
+
