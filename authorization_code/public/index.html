@@ -24,51 +24,57 @@
   <body>
     <div id="three"></div>
     <div id="over" class="container">
-      <div class="center-block">
-        <div id="info">
-          <div class="row">
-            <h1>Timer Tunes</h1>
-          </div>
 
-          <div class="row">
-            <p>A tool using Spotify Web and Echo Nest APIs to generate playlists of custom total length.<p>
-            <br>
-            <p>Enter <b>hours</b>, <b>minutes</b>, <b>seconds</b> for total duration.</p> 
-            <p>The <b>energy slider</b> represents music energy level from peaceful to roused.</p>
-            <br>
-          </div>
-        </div>
-
+      <div id="info">
         <div class="row">
-          <form id="timer-val">
-              <div id="hour" class="drop"><span id="hr-text">Hour</span> &nbsp; <i class="fa fa-angle-down"></i>
-                <ul id="hourUL" class="dropUL">
-                </ul>
-              </div>
-              <div id="minute" class="drop"><span id="min-text">Minute</span> &nbsp; <i class="fa fa-angle-down"></i>
-                <ul id="minuteUL" class="dropUL">
-                </ul>
-              </div>
-              <div id="second" class="drop"><span id="sec-text">Second</span> &nbsp; <i class="fa fa-angle-down"></i>
-                <ul id="secondUL" class="dropUL">
-                </ul>
-              </div>
-              <br>
-              <center><input type="range" min="0.15" max="0.85" id="energy" step="0.01" value="0.5" style="width:20%"></center>
-              <br>
-              <input type="submit" id="search" class="submit-timer" value="Search" />
-          </form>
+          <h1>Timer Tunes</h1>
         </div>
 
-        <div id="results" class="row">
-          <div class="col-md-8">
-            <div id="widget"></div>
-          </div>
-          <div class="row">
-            <div id="output"></div>
-          </div>
+        <div class="row br-below">
+          <p class="br-below">A tool using Spotify Web and Echo Nest APIs to generate playlists of custom total length.<p>
+          <p>Enter <b>hours</b>, <b>minutes</b>, <b>seconds</b> for total duration.</p> 
+          <p>The <b>energy slider</b> represents music energy level from peaceful to roused.</p>
+          <br>
         </div>
       </div>
+
+      <div class="row">
+        <form id="timer-val">
+            <div id="hour" class="drop">
+              <span id="hr-text">Hour</span> &nbsp; <i class="fa fa-angle-down"></i>
+              <ul id="hourUL" class="dropUL">
+              </ul>
+            </div>
+            <div id="minute" class="drop">
+              <span id="min-text">Minute</span> &nbsp; <i class="fa fa-angle-down"></i>
+              <ul id="minuteUL" class="dropUL">
+              </ul>
+            </div>
+            <div id="second" class="drop br-below">
+              <span id="sec-text">Second</span> &nbsp; <i class="fa fa-angle-down"></i>
+              <ul id="secondUL" class="dropUL">
+              </ul>
+            </div>
+            <div class="row br-below">
+              <center class="br-below">
+                <input type="range" min="0.15" max="0.85" id="energy" step="0.01" value="0.5" style="width:20%">
+              </center>
+            </div>
+            <input type="submit" id="search" class="submit-timer" value="Search" />
+        </form>
+      </div>
+
+      <div id="results" class="row center-block">
+        <div class="col-md-6 col-sm-6 col-xs-6 center-block">
+          <div id="widget"></div>
+        </div>
+        <div class="col-md-6 col-sm-6 col-xs-6 center-block">
+          <center>
+            <div id="output"></div>
+          </center>
+        </div>
+      </div>
+
     </div>
   
   </body>
