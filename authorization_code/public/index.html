@@ -5,291 +5,71 @@
     With inspiration and help from:
     https://github.com/possan/playlistcreator-example
     https://developer.spotify.com/web-api/tutorial/
+    Preloader from PixelBuddha (http://pixelbuddha.net/freebie/flat-preloaders)
+    CoDrops drop-down styles http://tympanus.net/codrops/2012/10/04/custom-drop-down-list-styling/
+    Daniel Stern on Styling Cross-Browser Compatible Range Inputs
      -->
     <title>Timer Tunes</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <style type="text/css">
-      #login, #loggedin {
-        display: none;
-      }
-      .text-overflow {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 500px;
-      }
-    </style>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <script src="https://use.typekit.net/kcm1uya.js"></script>
+    <script>try{Typekit.load({ async: true });}catch(e){}</script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+    <script src="/script.js"></script>
   </head>
 
   <body>
+    <div id="three"></div>
+    <div id="over" class="container">
+      <div class="center-block">
+        <div id="info">
+          <div class="row">
+            <h1>Timer Tunes</h1>
+          </div>
 
-    <div class="container">
-      <h1>Timer Tunes</h1>
-      <div class="row">
-        <p>Enter the timer value to count down.</p> 
-        <p>The slider represents music energy level.</p>
-        <form id="timer-val">
-            <select id="hour">
-            </select>
-            <select id="minute">
-            </select>
-            <select id="second">
-            </select>
+          <div class="row">
+            <p>A tool using Spotify Web and Echo Nest APIs to generate playlists of custom total length.<p>
             <br>
-            <input type="range" min="0.15" max="0.85" id="energy" step="0.01" value="0.5" style="width:20%">
+            <p>Enter <b>hours</b>, <b>minutes</b>, <b>seconds</b> for total duration.</p> 
+            <p>The <b>energy slider</b> represents music energy level from peaceful to roused.</p>
             <br>
-            <input type="submit" id="search" class="submit-timer" value="Search" />
-        </form>
-      </div>
-      <div class="row">
-        <div class="col-md-8">
-          <div id="widget"></div>
+          </div>
         </div>
-        <div class="col-md-4">
-          <div id="countdown">
-            <span class="min"></span>
-            <div class="clockLabel">Minutes</div>
-            <span class="sec"></span>
-            <div class="clockLabel">Seconds</div>
+
+        <div class="row">
+          <form id="timer-val">
+              <div id="hour" class="drop"><span id="hr-text">Hour</span> &nbsp; <i class="fa fa-angle-down"></i>
+                <ul id="hourUL" class="dropUL">
+                </ul>
+              </div>
+              <div id="minute" class="drop"><span id="min-text">Minute</span> &nbsp; <i class="fa fa-angle-down"></i>
+                <ul id="minuteUL" class="dropUL">
+                </ul>
+              </div>
+              <div id="second" class="drop"><span id="sec-text">Second</span> &nbsp; <i class="fa fa-angle-down"></i>
+                <ul id="secondUL" class="dropUL">
+                </ul>
+              </div>
+              <br>
+              <center><input type="range" min="0.15" max="0.85" id="energy" step="0.01" value="0.5" style="width:20%"></center>
+              <br>
+              <input type="submit" id="search" class="submit-timer" value="Search" />
+          </form>
+        </div>
+
+        <div id="results" class="row">
+          <div class="col-md-8">
+            <div id="widget"></div>
+          </div>
+          <div class="row">
+            <div id="output"></div>
           </div>
         </div>
       </div>
-      <div class="row">
-        <div id="output"></div>
-      </div>
     </div>
-
-    
-
-   <script>
-    $(document).ready(function() {
-
-      // Global var
-      var widgetTxt = '<iframe src="https://embed.spotify.com/?uri=spotify:trackset:PREFEREDTITLE:'; 
-      var wl=0, wcnt=0;
-      var access_token = '';
-
-      // Set up drop-downs
-      function dropDowns() {
-        $('#second').append('<option value="0">'+0+'</option>');
-        for(var i=1; i<60; i++){
-          $('#minute').append('<option value="'+i+'">'+i+'</option>');
-          $('#second').append('<option value="'+i+'">'+i+'</option>');
-        }
-        for(var i=0; i<8; i++){
-          $('#hour').append('<option value="'+i+'">'+i+'</option>');
-        }
-      }
-      dropDowns();
-
-      var selectTracks = function(rs, len, totTime, selHot, selEnergy, firsttime, callback) {
-        var times = [];
-        var totLen = 0;
-        for (var r=0; r<len; r++){
-          times[r] = Math.round(rs[r].audio_summary.duration);
-          totLen += times[r];
-        }
-
-        // Do we have enough songs?
-        if (totLen < totTime){
-          if(!firsttime){
-            moreSongs(totTime, selHot, selEnergy, rs, len, callback);
-            return;
-          } else {
-             $('#output').append("Apologies -- we did not grab enough music. Try a different request.");
-          }
-        }
-
-        // Assuming we have enough, let's get close
-        var M = [],
-            m2 = [],
-            R = [],
-            r2 = [],
-            o1, o2,
-            tracks = [];
-
-        totTime++;
-
-        for(var i=0; i<totTime; i++){
-          m2[i] = 0;
-          r2[i] = "0";
-        }
-        M.push(m2);
-        R.push(r2);
-
-        for(var i=1; i<len; i++){
-          m2 = [];
-          r2 = [];
-          for(var j=0; j<totTime; j++){
-            if(j < times[i]){
-              m2[j] = M[i-1][j];
-              r2[j] = R[i-1][j] + "0";
-            } else {
-              o1 = M[i-1][j];
-              o2 = times[i] + M[i-1][j-times[i]];
-              if (o1 >= o2){
-                m2[j] = o1;
-                r2[j] = R[i-1][j] + "0";
-              } else {
-                m2[j] = o2;
-                r2[j] = R[i-1][j-times[i]] + "1";
-              }
-            }
-          }
-          M.push(m2);
-          R.push(r2);
-        }
-        for(var j=0; j<totTime; j++){
-          if (R[len-1][totTime-1].charAt(j) == "1"){
-            tracks.push(rs[j]);
-          }
-        }
-        callback(tracks);
-      }
-
-      var printTrack = function(r, r_dur) {
-        var r_img = r.album.images[r.album.images.length - 1].url || "http://dreamatico.com/data_images/music/music-7.jpg",
-          r_album_URI = r.album.uri || 0,
-          r_album_name = r.album.name || "Unknown",
-          r_artist_name = r.artists[0].name || "Unknown",
-          r_artist_URI = r.artists[0].uri || "Unknown",
-          r_song_URI = r.uri || 0,
-          r_id = r.id || 0,
-          r_song_name = r.name || "Unknown";
-        var txt = '<div class="media">' +
-          '<a class="pull-left" href="#"><img class="media-object" src="' + r_img + '" /></a>' +
-          '<div class="media-body">' +
-          '<h4 class="media-heading"><a href="' + r_song_URI + '">' + r_song_name + ' (' + r_dur + ' sec)' + '</a></h4>' +
-          'Album: <a href="' + r_album_URI + '">' + r_album_name +
-          '</a><br/>Artist: <a href="' + r_artist_URI + '">' + r_artist_name +'</a>' +
-          '</div>' +
-          '</div>\n';      
-
-        $('#output').append(txt);
-        widgetTxt += r_id + ',';
-      }
-
-
-      var showTracks = function(rs, callback) {
-        var k=0;
-        for(var i in rs){
-          var en_r = rs[i];
-          var url = 'https://api.spotify.com/v1/search?type=track&limit=1&q='+en_r.title +' '+ en_r.artist_name;
-
-          $.ajax(url, {
-            dataType: 'json',
-            success: function(res) {
-              console.log(rs[wcnt], wcnt, rs);
-              callback(res.tracks.items[0], Math.round(rs[wcnt++].audio_summary.duration));
-            },
-            error: function(res) {
-              $('#output').append("Sorry! An error has occurred. Please try again with a different request.");
-              callback(null, null);
-            }
-          });
-        }
-        $('#output').append("<br><br>");
-      }
-
-
-      var findSongs = function(totTime, selHot, selEnergy, callback) {
-        var minEnergy = Number(selEnergy) - 0.1,
-            maxEnergy = Number(selEnergy) + 0.1;
-        minEnergy = (minEnergy > 0) ? minEnergy : 0;
-        maxEnergy = (maxEnergy < 1) ? maxEnergy : 1;
-
-        var buckets = '&bucket=audio_summary&bucket=artist_discovery_rank&bucket=artist_familiarity_rank';
-
-        var url = 'http://developer.echonest.com/api/v4/song/search?api_key=TCBNV01L0WKIP1NDF&format=json&results=100&rank_type=familiarity&sort=song_hotttnesss-desc&song_min_hotttnesss='+selHot+'&min_duration=60&max_duration='+totTime+'&min_energy='+minEnergy+'&max_energy='+maxEnergy+buckets;
-
-        $.ajax(url, {
-          format: 'json',
-          api_key: 'TCBNV01L0WKIP1NDF',
-          success: function(r) {
-            var len = r.response.songs.length;
-            callback(r.response.songs, len, totTime, selHot, selEnergy, 0);
-          },
-          error: function(r) {
-            $('#output').append("Sorry! An error has occurred. Please try again with a different request.");
-            callback(null, null, null, null, null, null);
-          }
-        });
-      }
-
-      var moreSongs = function(totTime, selHot, selEnergy, rs, len, callback) {
-        var moreResults = [],
-            moreLen = 0;
-
-        var minEnergy = Number(selEnergy) - 0.3,
-            maxEnergy = Number(selEnergy) - 0.1;
-        minEnergy = (minEnergy > 0) ? minEnergy : 0;
-        maxEnergy = (maxEnergy < 1) ? maxEnergy : 1;
-
-        var buckets = '&bucket=audio_summary&bucket=artist_discovery_rank&bucket=artist_familiarity_rank';
-
-        for (var i=0; i<2; i++){
-          var url = 'http://developer.echonest.com/api/v4/song/search?api_key=TCBNV01L0WKIP1NDF&format=json&results=100&rank_type=familiarity&sort=duration-asc&song_min_hotttnesss='+selHot+'&max_duration='+totTime+'&min_energy='+minEnergy+'&max_energy='+maxEnergy+buckets;
-
-          $.ajax(url, {
-            format: 'json',
-            api_key: 'TCBNV01L0WKIP1NDF',
-            success: function(r) {
-              moreLen = r.response.songs.length;
-              if(moreLen != 0){
-                moreResults = r.response.songs;
-                for(r in rs){
-                  moreResults.push(rs[r]);
-                }
-                selectTracks(moreResults, len+moreLen, totTime, selHot, selEnergy, 1, callback);
-                return;
-              } else{
-                minEnergy = Number(selEnergy) + 0.1;
-                maxEnergy = Number(selEnergy) + 0.3;
-              }
-            },
-            error: function(r) {
-              console.log("Echonest error");
-            }
-          });
-        }        
-      }
-
-      $('#timer-val').submit(function (e) {
-          e.preventDefault();
-          $('#output').empty();
-          $('#widget').append();
-          widgetTxt = '<iframe src="https://embed.spotify.com/?uri=spotify:trackset:TIMER%20TUNES:';
-          wl=0;
-          wcnt=0;
-
-          var inHr = Number($('#hour').val()),
-              inMin = Number($('#minute').val()),
-              inSec = Number($('#second').val()),
-              inEnergy = $('#energy').val();
-          var inputSecs = inSec + (inMin * 60) + (inHr * 3600);
-          if(inputSecs==60){
-            inputSecs = 61;
-          }
-          findSongs(inputSecs, 0.2, inEnergy, function(rs, len, totTime, selHot, selEnergy, firsttime){
-              selectTracks(rs, len, totTime, selHot, selEnergy, firsttime, function(tracks){
-                showTracks(tracks, function(r, r_dur){
-                  printTrack(r, r_dur);
-                  if(wcnt>=tracks.length && wl==0){
-                    wl=1;
-                    widgetTxt = widgetTxt.substring(0, widgetTxt.length - 1) +'&view=coverart" width="300" height="380"} frameborder="0" allowtransparency="true"></iframe>';
-                    $('#widget').empty();
-                    $('#widget').append(widgetTxt);
-                  }
-                });
-              });
-          });
-      });
-    });
-
-    </script>
   
   </body>
 </html>
