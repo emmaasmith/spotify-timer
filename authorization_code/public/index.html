@@ -5,19 +5,21 @@
     With inspiration and help from:
     https://github.com/possan/playlistcreator-example
     https://developer.spotify.com/web-api/tutorial/
-    Preloader from PixelBuddha (http://pixelbuddha.net/freebie/flat-preloaders)
     CoDrops drop-down styles http://tympanus.net/codrops/2012/10/04/custom-drop-down-list-styling/
     Daniel Stern on Styling Cross-Browser Compatible Range Inputs
+    Animation end function from http://davidwalsh.name/css-animation-callback
      -->
     <title>Timer Tunes</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.2/jquery.tipsy.css">
     <script src="https://use.typekit.net/kcm1uya.js"></script>
     <script>try{Typekit.load({ async: true });}catch(e){}</script>
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery.tipsy/1.0.2/jquery.tipsy.min.js'></script>
     <script src="/script.js"></script>
   </head>
 
@@ -27,37 +29,40 @@
 
       <div id="info">
         <div class="row">
-          <h1>Timer Tunes</h1>
+          <div class="TT">Timer Tunes</div>
         </div>
 
         <div class="row br-below">
-          <p class="br-below">A tool using Spotify Web and Echo Nest APIs to generate playlists of custom total length.<p>
-          <p>Enter <b>hours</b>, <b>minutes</b>, <b>seconds</b> for total duration.</p> 
-          <p>The <b>energy slider</b> represents music energy level from peaceful to roused.</p>
-          <br>
+            <p class="br-below"><a id='betaTT' href='#' title='Apologies for errors in song duration and repetition!'>Beta</a>: a tool using Spotify Web and Echo Nest APIs to generate playlists of custom total length.</p>
+            <p>Enter <b>hours</b>, <b>minutes</b>, <b>seconds</b> to set the playlist's total duration.</p> 
+            <p>The <b>energy slider</b> represents music energy level from peaceful to roused.</p>
+            <br>
         </div>
       </div>
 
       <div class="row">
         <form id="timer-val">
             <div id="hour" class="drop">
-              <span id="hr-text">Hour</span> &nbsp; <i class="fa fa-angle-down"></i>
+              <span id="hr-text">0</span> &nbsp;<b>hr</b> &nbsp; <i class="fa fa-angle-down"></i>
               <ul id="hourUL" class="dropUL">
               </ul>
             </div>
             <div id="minute" class="drop">
-              <span id="min-text">Minute</span> &nbsp; <i class="fa fa-angle-down"></i>
+              <span id="min-text">0</span> &nbsp;<b>min</b> &nbsp; <i class="fa fa-angle-down"></i>
               <ul id="minuteUL" class="dropUL">
               </ul>
             </div>
             <div id="second" class="drop br-below">
-              <span id="sec-text">Second</span> &nbsp; <i class="fa fa-angle-down"></i>
+              <span id="sec-text">0</span> &nbsp;<b>sec</b> &nbsp; <i class="fa fa-angle-down"></i>
               <ul id="secondUL" class="dropUL">
               </ul>
             </div>
+            <br>
             <div class="row br-below">
               <center class="br-below">
-                <input type="range" min="0.15" max="0.85" id="energy" step="0.01" value="0.5" style="width:20%">
+                <input type="range" min="0.15" max="0.85" id="energy" step="0.01" value="0.5" style="width:250px">
+                <div class="label l-left">Peaceful</div>
+                <div class="label l-right">Energetic</div>
               </center>
             </div>
             <input type="submit" id="search" class="submit-timer" value="Search" />
@@ -65,15 +70,27 @@
       </div>
 
       <div id="results" class="row center-block">
-        <div class="col-md-6 col-sm-6 col-xs-6 center-block">
-          <div id="widget"></div>
+        <div class="row onSel">
+          <div class="col-md-6 col-sm-6 col-xs-6 center-block">
+            <h2>Play</h2>
+          </div>
+          <div class="col-md-6 col-sm-6 col-xs-6 center-block">
+            <h2>Song list</h2>
+          </div>
         </div>
-        <div class="col-md-6 col-sm-6 col-xs-6 center-block">
-          <center>
-            <div id="output"></div>
-          </center>
+        <div class="row">
+          <div class="col-md-6 col-sm-6 col-xs-6 center-block">
+            <div id="widget"></div>
+          </div>
+          <div class="col-md-6 col-sm-6 col-xs-6 center-block">
+            <center>
+              <div id="output"></div>
+            </center>
+          </div>
         </div>
       </div>
+
+      <div id="btrig"></div>
 
     </div>
   
