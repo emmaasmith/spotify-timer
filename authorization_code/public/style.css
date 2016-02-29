@@ -1,0 +1,261 @@
+body{
+	background-color: #000000;
+	font-family: "proxima-nova",sans-serif;
+	font-style: normal;
+	font-weight: 400;
+	font-size: 150%;
+	width:100%;
+	height:100%;
+	overflow:hidden;
+}
+#three{
+	width:100%;
+	height:100%;
+	margin:0;
+	padding: 0;
+}
+#over{
+	position:absolute;
+	top:10%;
+	z-index:5;
+	text-align: center;
+	color: #fff;
+	transition: all 0.3s ease-out;
+}
+#over a{
+  color: #fff;
+  font-style: italic;
+}
+.TT{
+	font-family: "proxima-nova",sans-serif;
+	font-style: normal;
+	font-weight: 700;
+	font-size: 5em;
+  padding: 10px 0;
+	position: relative;
+	display: inline-block;
+	margin: 5px 15px;
+	outline: none;
+	text-decoration: none;
+  font-weight: 700;
+	text-shadow: 0 0 1px rgba(255,255,255,0.3);
+	color: #fff;
+} 
+
+
+
+h2{
+	font-family: "proxima-nova",sans-serif;
+	font-style: normal;
+	font-weight: 600;
+	font-size: 1.5em;
+	transition: all 0.3s ease-out;
+	text-decoration: underline;
+  -webkit-text-decoration-color: #3C9EB4;
+  text-decoration-color: #3C9EB4;
+}
+p{
+	transition: all 0.3s ease-out;
+}
+b, #search, .label{
+	font-weight: 800;
+	font-size: 0.7em;
+	text-transform: uppercase;
+}
+.l-align{
+	text-align: left;
+	width: 50%;
+}
+.onSel{
+	display: none;
+}
+.song-name{
+	font-size: 1.2em;
+}
+.small h1{
+	font-size: 2.5em;
+}
+.small p{
+	font-size:0.8em;
+}
+.small #info{
+	top:-20%;
+}
+
+#loader{
+	width: 200px;
+	height: 200px;
+}
+#output{
+	overflow: scroll;
+	width: 350px;
+  padding: 25px;
+	height: 300px;
+	text-align: left;
+	font-size: 0.8em;
+}
+#output a{
+	color: #ccc;
+}
+.br-below{
+	margin-bottom: 20px;
+}
+#widget{
+  margin-top:10px;
+}
+.drop {
+    position: relative;
+    width: 105px;
+    display: inline-block;
+    margin: 0 auto;
+    padding: 5px 15px;
+
+    color: #000;
+    background: #fff;
+    border-bottom: 4px solid #aaa;
+    cursor: pointer;
+    outline: none;
+}
+.drop .dropUL {
+    position: absolute;
+    top: 100%;
+    left: 0px;
+    right: 0px;
+    overflow: scroll;
+    max-height:250px;
+
+    background: white;
+    transition: all 0.3s ease-out;
+    list-style: none;
+    font-size: 0.2em;
+    padding:0;
+    margin:0;
+
+    opacity: 0;
+    pointer-events: none;
+}
+.active .dropUL {
+    opacity: 1;
+    pointer-events: auto;
+    background-color: #ddd;
+}
+.dropUL li a {
+    display: block;
+    text-decoration: none;
+    color: #333;
+    padding: 2px;
+    transition: all 0.3s ease-out;
+}
+.dropUL li:hover a {
+	background-color: #7ECF6E;
+    color: #fff;
+}
+#search{
+	background-color: #7ECF6E;
+	color: #000;
+	border:0px;
+	padding: 8px 13px;
+}
+#btrig{
+  height:2px;
+  transition: all 0.3s ease-out;
+}
+
+
+input[type=range] {
+  -webkit-appearance: none;
+  margin: 18px 0;
+  width: 100%;
+  z-index: 10;
+}
+input[type=range]:focus {
+  outline: none;
+  z-index: 10;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  height: 25px;
+  width: 25px;
+  border-radius: 25px;
+  background: #aaa;
+  cursor: pointer;
+  -webkit-appearance: none;
+  margin-top: -10px;
+  z-index: 10;
+}
+input[type=range]::-moz-range-thumb {
+  height: 25px;
+  width: 25px;
+  border-radius: 25px;
+  background: #aaa;
+  cursor: pointer;
+  z-index: 10;
+}
+input[type=range]::-ms-thumb {
+  height: 25px;
+  width: 25px;
+  border-radius: 25px;
+  background: #aaa;
+  cursor: pointer;
+  z-index: 10;
+}
+
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 200%;
+  height: 2px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: linear-gradient(to right, #7db9e8 8%,#d99c8c 95%);
+  background: -webkit-linear-gradient(left, #7db9e8 8%,#d99c8c 95%);
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #367ebd;
+}
+input[type=range]::-moz-range-track {
+  width: 200%;
+  height: 2px;
+  cursor: pointer;
+  animate: 0.2s;
+  background: linear-gradient(to right, #7db9e8 8%,#d99c8c 95%);
+  background: -moz-linear-gradient(left, #7db9e8 8%, #d99c8c 95%);
+}
+input[type=range]::-ms-track {
+  width: 200%;
+  height: 2px;
+  cursor: pointer;
+  animate: 0.2s;
+  border-radius: 1.3px;
+  background: transparent;
+  background: linear-gradient(to right, #7db9e8 8%,#d99c8c 95%);
+  background: -ms-linear-gradient(to right, #7db9e8 8%,#d99c8c 95%);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#7db9e8', endColorstr='#d99c8c',GradientType=1 );
+  border-color: transparent;
+  color: transparent;
+}
+.label {
+  position:relative;
+  top:-20px;
+  font-size: 0.5em;
+  z-index: -10;
+}
+.l-left{
+  left: -75px;
+}
+.l-right{
+  left: 75px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
